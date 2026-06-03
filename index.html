@@ -32,8 +32,8 @@
             min-height: 100vh;
             background: linear-gradient(135deg, #fff5f7 0%, #ffe4e9 100%);
             color: var(--text-main);
-            padding: 20px;
-            overflow: hidden;
+            padding: 40px 20px; /* Increased padding to give breathing room on small screens */
+            overflow-y: auto; /* FIX: Allows natural scrolling if the card is bigger than the viewport */
         }
 
         .card {
@@ -46,6 +46,7 @@
             width: 100%;
             text-align: center;
             position: relative;
+            margin: auto; /* FIX: Keeps the card perfectly centered even when scrolling is active */
         }
 
         h2 {
@@ -254,7 +255,6 @@
             box-shadow: 0 3px 0px #e63956;
         }
 
-        /* LOCKED FIXED SIZES ON NO BUTTON */
         #no-btn {
             background-color: #f1eef5;
             color: #8e7f93;
@@ -276,7 +276,6 @@
             animation: float 3s ease-in-out infinite;
         }
 
-        /* Metadata Deployment Label Style */
         .deployment-meta {
             margin-top: 2rem;
             font-size: 0.7rem;
@@ -324,7 +323,7 @@
 
         <button class="btn btn-primary" id="generate-btn">Generate Demo ➔</button>
         
-        <div class="deployment-meta">Live Build: June 3, 2026 • 20:00 PHT</div>
+        <div class="deployment-meta">Live Build: June 3, 2026 • 20:03 PHT</div>
     </div>
 
     <div class="card hidden" id="recipient-card">
@@ -348,7 +347,7 @@
             <button class="btn" id="no-btn">Decline 🥺</button>
         </div>
         
-        <div class="deployment-meta">Live Build: June 3, 2026 • 20:00 PHT</div>
+        <div class="deployment-meta">Live Build: June 3, 2026 • 20:03 PHT</div>
     </div>
 
     <script>
@@ -367,7 +366,6 @@
         const selectedIdeas = new Set();
         const wrapper = document.getElementById('ideas-wrapper');
 
-        // Setup Idea Selector Grid
         dateCatalog.forEach(item => {
             const el = document.createElement('div');
             el.className = 'idea-card';
@@ -384,7 +382,6 @@
             wrapper.appendChild(el);
         });
 
-        // Add Multi-Slot Input fields dynamically
         const addSlotTrigger = document.getElementById('add-slot-trigger');
         const slotsWrapper = document.getElementById('slots-wrapper');
         
@@ -395,13 +392,11 @@
             slotsWrapper.appendChild(newInput);
         });
 
-        // Phase Transition Trigger
         const generateBtn = document.getElementById('generate-btn');
         generateBtn.addEventListener('click', () => {
             const asker = document.getElementById('asker-name').value || "Alex";
             const recipient = document.getElementById('recipient-name').value || "Taylor";
             
-            // Collect all non-empty date slots
             const rawInputs = document.querySelectorAll('.date-slot-input');
             const processedSlots = [];
             
@@ -414,11 +409,9 @@
             });
             if(processedSlots.length === 0) processedSlots.push("Sometime soon!");
 
-            // Setup Recipient Cards
             document.getElementById('recipient-title').innerText = `Hey ${recipient}! 💕`;
             document.getElementById('recipient-subtitle').innerText = `${asker} wants to take you out! Customize the itinerary:`;
 
-            // Inject Custom Vibe checkboxes
             const ideasContainer = document.getElementById('ideas-selector-container');
             ideasContainer.innerHTML = '';
             if(selectedIdeas.size === 0) selectedIdeas.add('any');
@@ -429,7 +422,6 @@
             });
             createSelectionItem(ideasContainer, "Something else... 🤔", 'other', 'vibe-checkbox', 'checkbox');
 
-            // Inject Custom Time radio dials
             const slotsContainer = document.getElementById('slots-selector-container');
             slotsContainer.innerHTML = '';
             processedSlots.forEach((slotText, index) => {
@@ -438,6 +430,9 @@
 
             document.getElementById('asker-card').classList.add('hidden');
             document.getElementById('recipient-card').classList.remove('hidden');
+            
+            // FIX: Force screen to scroll back to top when switching phases so the user isn't stuck at the bottom
+            window.scrollTo(0, 0);
         });
 
         function createSelectionItem(parent, text, value, groupName, type) {
@@ -455,7 +450,6 @@
                     labelEl.classList.remove('selected');
                 }
                 
-                // Track if "Other" custom option box was triggered
                 if(value === 'other') {
                     const otherInput = document.getElementById('other-input-container');
                     if(e.target.checked) otherInput.classList.remove('hidden');
@@ -465,10 +459,12 @@
             parent.appendChild(labelEl);
         }
 
-        // NO-BUTTON BALANCED FLIGHT LOGIC
+        // NO-BUTTON SAFE CONTAINER BOUNDARIES LOGIC
         const noBtn = document.getElementById('no-btn');
         function dodge() {
             const padding = 40;
+            
+            // FIX: Boundaries calculated relative to viewport so it never teleports outside the visible viewport window
             const maxX = window.innerWidth - noBtn.offsetWidth - padding;
             const maxY = window.innerHeight - noBtn.offsetHeight - padding;
 
@@ -483,9 +479,7 @@
         noBtn.addEventListener('mouseover', dodge);
         noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); dodge(); });
 
-        // Accept Event Click Handler
         document.getElementById('yes-btn').addEventListener('click', () => {
-            // Read chosen items
             const selectedVibeElements = document.querySelectorAll('input[name="vibe-checkbox"]:checked');
             let vibes = [];
             selectedVibeElements.forEach(el => {
@@ -501,7 +495,7 @@
             const finalTime = selectedTimeEl ? selectedTimeEl.parentElement.querySelector('span').innerText : "a perfect time";
 
             document.getElementById('recipient-emoji').innerText = '🎉✨';
-            document.getElementById('recipient-title').innerText = "It's fully locked in!";
+            document.getElementById('recipient-title').innerText = "It's a date!!";
             document.getElementById('recipient-subtitle').innerHTML = `Going for: <strong>${vibes.join(' & ') || 'Surprise Vibe'}</strong><br>Scheduled for: <strong>${finalTime}</strong>.<br><br>Can't wait! 🍰🌸`;
             
             document.querySelectorAll('.selection-section-title').forEach(el => el.classList.add('hidden'));
@@ -509,6 +503,8 @@
             document.getElementById('slots-selector-container').classList.add('hidden');
             document.getElementById('other-input-container').classList.add('hidden');
             document.getElementById('action-wrapper').classList.add('hidden');
+            
+            window.scrollTo(0, 0);
         });
     </script>
 </body>
