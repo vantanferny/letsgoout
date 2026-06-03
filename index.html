@@ -32,8 +32,8 @@
             min-height: 100vh;
             background: linear-gradient(135deg, #fff5f7 0%, #ffe4e9 100%);
             color: var(--text-main);
-            padding: 40px 20px; /* Increased padding to give breathing room on small screens */
-            overflow-y: auto; /* FIX: Allows natural scrolling if the card is bigger than the viewport */
+            padding: 40px 20px;
+            overflow-y: auto;
         }
 
         .card {
@@ -46,7 +46,7 @@
             width: 100%;
             text-align: center;
             position: relative;
-            margin: auto; /* FIX: Keeps the card perfectly centered even when scrolling is active */
+            margin: auto;
         }
 
         h2 {
@@ -77,7 +77,7 @@
             letter-spacing: 0.08em;
         }
 
-        input[type="text"], input[type="datetime-local"] {
+        input[type="text"], select {
             width: 100%;
             padding: 0.9rem;
             border: 3px solid var(--accent);
@@ -87,19 +87,47 @@
             transition: all 0.2s ease;
             background-color: #fffbfe;
             color: var(--text-main);
+            appearance: none; /* Removes platform default arrows */
+            cursor: pointer;
         }
 
-        input:focus {
+        /* Custom dropdown arrows */
+        .select-wrapper {
+            position: relative;
+        }
+        .select-wrapper::after {
+            content: '▼';
+            font-size: 0.8rem;
+            color: var(--primary);
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        input:focus, select:focus {
             border-color: var(--primary);
             background-color: #fff;
         }
 
-        /* Multiple Slots Stack */
-        .slots-container {
+        /* CUSTOM DATE PICKER BLOCK */
+        .custom-slot-row {
+            background: #fffbfe;
+            border: 3px solid var(--accent);
+            padding: 15px;
+            border-radius: 24px;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .slot-selectors {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 10px;
         }
 
         .add-slot-btn {
@@ -138,10 +166,7 @@
             user-select: none;
         }
 
-        .idea-card:hover {
-            transform: scale(1.05);
-            border-color: var(--border);
-        }
+        .idea-card:hover { transform: scale(1.05); border-color: var(--border); }
 
         .idea-card img {
             width: 48px;
@@ -196,9 +221,7 @@
             background: #fffbfe;
         }
 
-        .select-item:hover {
-            border-color: var(--border);
-        }
+        .select-item:hover { border-color: var(--border); }
 
         .select-item.selected {
             border-color: var(--primary);
@@ -210,7 +233,7 @@
             transform: scale(1.3);
         }
 
-        /* Buttons Fixes */
+        /* Buttons */
         .btn {
             width: 100%;
             padding: 1rem;
@@ -250,10 +273,7 @@
             height: 50px; 
         }
 
-        #yes-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 3px 0px #e63956;
-        }
+        #yes-btn:active { transform: translateY(3px); box-shadow: 0 3px 0px #e63956; }
 
         #no-btn {
             background-color: #f1eef5;
@@ -266,9 +286,7 @@
             transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
         
         .header-illustration {
             font-size: 3.5rem;
@@ -316,14 +334,13 @@
         <div class="form-group">
             <label>Propose Date & Time Options ⏰</label>
             <div class="slots-container" id="slots-wrapper">
-                <input type="datetime-local" class="date-slot-input">
-            </div>
-            <button class="add-slot-btn" id="add-slot-trigger">+ Add Another Date Slot</button>
+                </div>
+            <button class="add-slot-btn" id="add-slot-trigger">+ Add Another Date Option</button>
         </div>
 
         <button class="btn btn-primary" id="generate-btn">Generate Demo ➔</button>
         
-        <div class="deployment-meta">Live Build: June 3, 2026 • 20:03 PHT</div>
+        <div class="deployment-meta">Live Build: June 3, 2026 • 20:09 PHT</div>
     </div>
 
     <div class="card hidden" id="recipient-card">
@@ -347,7 +364,7 @@
             <button class="btn" id="no-btn">Decline 🥺</button>
         </div>
         
-        <div class="deployment-meta">Live Build: June 3, 2026 • 20:03 PHT</div>
+        <div class="deployment-meta">Live Build: June 3, 2026 • 20:09 PHT</div>
     </div>
 
     <script>
@@ -366,6 +383,7 @@
         const selectedIdeas = new Set();
         const wrapper = document.getElementById('ideas-wrapper');
 
+        // Setup Idea Grid
         dateCatalog.forEach(item => {
             const el = document.createElement('div');
             el.className = 'idea-card';
@@ -382,32 +400,89 @@
             wrapper.appendChild(el);
         });
 
-        const addSlotTrigger = document.getElementById('add-slot-trigger');
+        // GENERATING THE 00/30 CLEAN TIMEPICKER ASSETS
+        function generateDateOptions() {
+            let options = [];
+            for (let i = 0; i < 7; i++) {
+                let d = new Date();
+                d.setDate(d.getDate() + i);
+                let label = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+                if(i === 0) label = "Today (" + label + ")";
+                if(i === 1) label = "Tomorrow (" + label + ")";
+                options.push(label);
+            }
+            return options;
+        }
+
+        function generateTimeOptions() {
+            let options = [];
+            for (let hour = 8; hour <= 22; hour++) { // From 8 AM to 10 PM
+                let ampm = hour >= 12 ? 'PM' : 'AM';
+                let displayHour = hour > 12 ? hour - 12 : hour;
+                options.push(`${displayHour}:00 ${ampm}`);
+                options.push(`${displayHour}:30 ${ampm}`);
+            }
+            return options;
+        }
+
         const slotsWrapper = document.getElementById('slots-wrapper');
         
-        addSlotTrigger.addEventListener('click', () => {
-            const newInput = document.createElement('input');
-            newInput.type = 'datetime-local';
-            newInput.className = 'date-slot-input';
-            slotsWrapper.appendChild(newInput);
+        function createCustomPickerRow() {
+            const row = document.createElement('div');
+            row.className = 'custom-slot-row';
+            
+            // Date Picker dropdown
+            const dateWrapper = document.createElement('div');
+            dateWrapper.className = 'select-wrapper';
+            const dateSelect = document.createElement('select');
+            dateSelect.className = 'slot-date-select';
+            generateDateOptions().forEach(d => {
+                dateSelect.innerHTML += `<option value="${d}">${d}</option>`;
+            });
+            dateWrapper.appendChild(dateSelect);
+
+            // Time Picker dropdown (Locked to :00 and :30 intervals)
+            const timeWrapper = document.createElement('div');
+            timeWrapper.className = 'select-wrapper';
+            const timeSelect = document.createElement('select');
+            timeSelect.className = 'slot-time-select';
+            generateTimeOptions().forEach(t => {
+                timeSelect.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+            timeWrapper.appendChild(timeSelect);
+
+            const structure = document.createElement('div');
+            structure.className = 'slot-selectors';
+            structure.appendChild(dateWrapper);
+            structure.appendChild(timeWrapper);
+            
+            row.appendChild(structure);
+            slotsWrapper.appendChild(row);
+        }
+
+        // Initialize First Row automatically
+        createCustomPickerRow();
+
+        document.getElementById('add-slot-trigger').addEventListener('click', () => {
+            createCustomPickerRow();
         });
 
+        // Phase Transition Trigger
         const generateBtn = document.getElementById('generate-btn');
         generateBtn.addEventListener('click', () => {
             const asker = document.getElementById('asker-name').value || "Alex";
             const recipient = document.getElementById('recipient-name').value || "Taylor";
             
-            const rawInputs = document.querySelectorAll('.date-slot-input');
+            // Read Custom Selections
+            const dateSelects = document.querySelectorAll('.slot-date-select');
+            const timeSelects = document.querySelectorAll('.slot-time-select');
             const processedSlots = [];
-            
-            rawInputs.forEach(input => {
-                if(input.value) {
-                    const d = new Date(input.value);
-                    const formatted = d.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' @ ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    processedSlots.push(formatted);
-                }
+
+            dateSelects.forEach((selectNode, idx) => {
+                const dateVal = selectNode.value;
+                const timeVal = timeSelects[idx].value;
+                processedSlots.push(`${dateVal} @ ${timeVal}`);
             });
-            if(processedSlots.length === 0) processedSlots.push("Sometime soon!");
 
             document.getElementById('recipient-title').innerText = `Hey ${recipient}! 💕`;
             document.getElementById('recipient-subtitle').innerText = `${asker} wants to take you out! Customize the itinerary:`;
@@ -430,8 +505,6 @@
 
             document.getElementById('asker-card').classList.add('hidden');
             document.getElementById('recipient-card').classList.remove('hidden');
-            
-            // FIX: Force screen to scroll back to top when switching phases so the user isn't stuck at the bottom
             window.scrollTo(0, 0);
         });
 
@@ -444,11 +517,8 @@
                 if(type === 'radio') {
                     parent.querySelectorAll('.select-item').forEach(x => x.classList.remove('selected'));
                 }
-                if(e.target.checked) {
-                    labelEl.classList.add('selected');
-                } else {
-                    labelEl.classList.remove('selected');
-                }
+                if(e.target.checked) labelEl.classList.add('selected');
+                else labelEl.classList.remove('selected');
                 
                 if(value === 'other') {
                     const otherInput = document.getElementById('other-input-container');
@@ -459,12 +529,10 @@
             parent.appendChild(labelEl);
         }
 
-        // NO-BUTTON SAFE CONTAINER BOUNDARIES LOGIC
+        // NO BUTTON ESCAPE ENGINE
         const noBtn = document.getElementById('no-btn');
         function dodge() {
             const padding = 40;
-            
-            // FIX: Boundaries calculated relative to viewport so it never teleports outside the visible viewport window
             const maxX = window.innerWidth - noBtn.offsetWidth - padding;
             const maxY = window.innerHeight - noBtn.offsetHeight - padding;
 
@@ -503,7 +571,6 @@
             document.getElementById('slots-selector-container').classList.add('hidden');
             document.getElementById('other-input-container').classList.add('hidden');
             document.getElementById('action-wrapper').classList.add('hidden');
-            
             window.scrollTo(0, 0);
         });
     </script>
