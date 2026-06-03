@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inquire — Let's Go Out! ✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #fff0f3;
+            --surface: #ffffff;
+            --text-main: #5c4347;
+            --text-muted: #a3858a;
+            --primary: #ff758f; 
+            --primary-hover: #ff4d6d;
+            --accent: #fff0f3;
+            --border: #fecdd3;
+            --radius: 32px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Fredoka', -apple-system, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffe4e9 100%);
+            color: var(--text-main);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 2.5rem 2rem;
+            border-radius: var(--radius);
+            border: 4px solid var(--border);
+            box-shadow: 0 16px 32px rgba(255, 154, 172, 0.15);
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        input[type="text"], input[type="datetime-local"] {
+            width: 100%;
+            padding: 0.9rem;
+            border: 3px solid var(--accent);
+            border-radius: 20px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s ease;
+            background-color: #fffbfe;
+            color: var(--text-main);
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background-color: #fff;
+        }
+
+        /* Cute Grid Cards for Date Ideas */
+        .ideas-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .idea-card {
+            border: 3px solid var(--accent);
+            border-radius: 20px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            background: #fffbfe;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+        }
+
+        .idea-card:hover {
+            transform: scale(1.05);
+            border-color: var(--border);
+        }
+
+        .idea-card img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            margin-bottom: 6px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .idea-card span {
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: block;
+            color: var(--text-main);
+        }
+
+        .idea-card.selected {
+            background-color: #ffe5ec;
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        /* Recipient Selection Options */
+        .selection-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .select-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            border: 3px solid var(--accent);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fffbfe;
+        }
+
+        .select-item:hover {
+            border-color: var(--border);
+        }
+
+        .select-item.selected {
+            border-color: var(--primary);
+            background-color: #ffe5ec;
+        }
+
+        .select-item input[type="radio"] {
+            accent-color: var(--primary);
+            transform: scale(1.3);
+        }
+
+        /* Cute Pill Buttons */
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 8px 0px #e63956;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0px #e63956;
+        }
+
+        .proposal-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 2rem;
+            min-height: 60px;
+        }
+
+        #yes-btn {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 6px 0px #e63956;
+            flex: 1.2;
+        }
+
+        #yes-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0px #e63956;
+        }
+
+        /* THE NEW ULTRA-CUTE NO BUTTON */
+        #no-btn {
+            background-color: #f1eef5;
+            color: #8e7f93;
+            border: 3px dashed #d2c9d6;
+            border-radius: 50px;
+            flex: 0.8;
+            /* Ultra smooth bouncy slide */
+            transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+        
+        .header-illustration {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="asker-card">
+        <div class="header-illustration">💌</div>
+        <h2>Create Invite ✨</h2>
+        <p>Set up your perfect date package!</p>
+
+        <div class="form-group">
+            <label>Your Name</label>
+            <input type="text" id="asker-name" placeholder="Alex">
+        </div>
+
+        <div class="form-group">
+            <label>Their Name</label>
+            <input type="text" id="recipient-name" placeholder="Taylor">
+        </div>
+
+        <div class="form-group">
+            <label>Date Ideas (Pick Multiple) 🍕</label>
+            <div class="ideas-grid" id="ideas-wrapper">
+                </div>
+        </div>
+
+        <div class="form-group">
+            <label>Propose a Date & Time ⏰</label>
+            <input type="datetime-local" id="date-option-1">
+        </div>
+
+        <button class="btn btn-primary" id="generate-btn">Generate Demo ➔</button>
+    </div>
+
+    <div class="card hidden" id="recipient-card">
+        <div class="header-illustration" id="recipient-emoji">✨</div>
+        <h2 id="recipient-title">Hey! 💕</h2>
+        <p id="recipient-subtitle">Pick your absolute favorite option:</p>
+
+        <div class="form-group">
+            <label>Select Itinerary Option</label>
+            <div class="selection-list" id="options-selector-container">
+                </div>
+        </div>
+
+        <div class="form-group hidden" id="other-input-container">
+            <label>What do you prefer instead? ✨</label>
+            <input type="text" id="other-freeform" placeholder="e.g., Arcade & bubble tea?">
+        </div>
+
+        <div class="proposal-actions" id="action-wrapper">
+            <button class="btn" id="yes-btn">Accept! ✨💖</button>
+            <button class="btn" id="no-btn">Decline 🥺</button>
+        </div>
+    </div>
+
+    <script>
+        const dateCatalog = [
+            { id: 'pizza', label: 'Pizza', img: 'https://cdn-icons-png.flaticon.com/128/3595/3595455.png' },
+            { id: 'ramen', label: 'Ramen', img: 'https://cdn-icons-png.flaticon.com/128/1041/1041349.png' },
+            { id: 'coffee', label: 'Coffee', img: 'https://cdn-icons-png.flaticon.com/128/924/924514.png' },
+            { id: 'drinks', label: 'Drinks', img: 'https://cdn-icons-png.flaticon.com/128/924/924525.png' },
+            { id: 'steak', label: 'Steak', img: 'https://cdn-icons-png.flaticon.com/128/3082/3082031.png' },
+            { id: 'gym', label: 'Gym', img: 'https://cdn-icons-png.flaticon.com/128/2964/2964514.png' },
+            { id: 'walk', label: 'Walk', img: 'https://cdn-icons-png.flaticon.com/128/4383/4383626.png' },
+            { id: 'run', label: 'Run', img: 'https://cdn-icons-png.flaticon.com/128/5147/5147006.png' },
+            { id: 'any', label: 'Surprise Me!', img: 'https://cdn-icons-png.flaticon.com/128/2331/2331327.png' }
+        ];
+
+        const selectedIdeas = new Set();
+        const wrapper = document.getElementById('ideas-wrapper');
+
+        dateCatalog.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'idea-card';
+            el.innerHTML = `<img src="${item.img}"><span>${item.label}</span>`;
+            el.addEventListener('click', () => {
+                if(selectedIdeas.has(item.id)) {
+                    selectedIdeas.delete(item.id);
+                    el.classList.remove('selected');
+                } else {
+                    selectedIdeas.add(item.id);
+                    el.classList.add('selected');
+                }
+            });
+            wrapper.appendChild(el);
+        });
+
+        const generateBtn = document.getElementById('generate-btn');
+        generateBtn.addEventListener('click', () => {
+            const asker = document.getElementById('asker-name').value || "Alex";
+            const recipient = document.getElementById('recipient-name').value || "Taylor";
+            const rawDate = document.getElementById('date-option-1').value;
+
+            let dateString = "Sometime soon";
+            if(rawDate) {
+                const d = new Date(rawDate);
+                dateString = d.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' at ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+
+            document.getElementById('recipient-title').innerText = `Hey ${recipient}! 💕`;
+            document.getElementById('recipient-subtitle').innerText = `${asker} wants to take you out! Pick your vibe:`;
+
+            const optionsContainer = document.getElementById('options-selector-container');
+            optionsContainer.innerHTML = ''; 
+
+            if(selectedIdeas.size === 0) selectedIdeas.add('any');
+
+            selectedIdeas.forEach(id => {
+                const match = dateCatalog.find(x => x.id === id);
+                createRadioButton(optionsContainer, `${match.label} (${dateString})`, id);
+            });
+
+            createRadioButton(optionsContainer, "Something else... 🤔", "other");
+
+            document.getElementById('asker-card').classList.add('hidden');
+            document.getElementById('recipient-card').classList.remove('hidden');
+        });
+
+        function createRadioButton(parent, text, value) {
+            const labelEl = document.createElement('label');
+            labelEl.className = 'select-item';
+            labelEl.innerHTML = `<input type="radio" name="itinerary" value="${value}"> <span>${text}</span>`;
+            
+            labelEl.addEventListener('click', () => {
+                document.querySelectorAll('.select-item').forEach(x => x.classList.remove('selected'));
+                labelEl.classList.add('selected');
+                
+                const otherInput = document.getElementById('other-input-container');
+                if(value === 'other') {
+                    otherInput.classList.remove('hidden');
+                } else {
+                    otherInput.classList.add('hidden');
+                }
+            });
+            parent.appendChild(labelEl);
+        }
+
+        // SMOOTH BOUNCY EVASION
+        const noBtn = document.getElementById('no-btn');
+        function dodge() {
+            const padding = 40;
+            const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+            const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+
+            const randomX = Math.floor(Math.random() * (maxX - padding) + padding);
+            const randomY = Math.floor(Math.random() * (maxY - padding) + padding);
+
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = randomX + 'px';
+            noBtn.style.top = randomY + 'px';
+        }
+
+        noBtn.addEventListener('mouseover', dodge);
+        noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); dodge(); });
+
+        // Win State
+        document.getElementById('yes-btn').addEventListener('click', () => {
+            const checkedOpt = document.querySelector('input[name="itinerary"]:checked');
+            let finalSelection = "a surprise date";
+            
+            if(checkedOpt) {
+                if(checkedOpt.value === 'other') {
+                    finalSelection = document.getElementById('other-freeform').value || "something custom and fun";
+                } else {
+                    finalSelection = dateCatalog.find(x => x.id === checkedOpt.value).label;
+                }
+            }
+
+            document.getElementById('recipient-emoji').innerText = '🎉✨';
+            document.getElementById('recipient-title').innerText = "Yay! It's a date!!";
+            document.getElementById('recipient-subtitle').innerHTML = `Locked in for <strong>${finalSelection}</strong>. Can't wait! 🍰🌸`;
+            document.getElementById('options-selector-container').classList.add('hidden');
+            document.getElementById('other-input-container').classList.add('hidden');
+            document.getElementById('action-wrapper').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
