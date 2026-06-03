@@ -93,7 +93,32 @@
             background-color: #fff;
         }
 
-        /* Cute Grid Cards for Date Ideas */
+        /* Multiple Slots Stack */
+        .slots-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 0.5rem;
+        }
+
+        .add-slot-btn {
+            background: transparent;
+            color: var(--primary);
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            display: inline-block;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+
+        .add-slot-btn:hover {
+            color: var(--primary-hover);
+        }
+
+        /* Ideas Grid */
         .ideas-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -140,20 +165,29 @@
             transform: scale(1.05);
         }
 
-        /* Recipient Selection Options */
+        /* Selections */
+        .selection-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin: 1rem 0 0.5rem 0;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
         .selection-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             text-align: left;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .select-item {
             display: flex;
             align-items: center;
             gap: 14px;
-            padding: 14px;
+            padding: 12px 14px;
             border: 3px solid var(--accent);
             border-radius: 20px;
             cursor: pointer;
@@ -170,12 +204,12 @@
             background-color: #ffe5ec;
         }
 
-        .select-item input[type="radio"] {
+        .select-item input[type="radio"], .select-item input[type="checkbox"] {
             accent-color: var(--primary);
             transform: scale(1.3);
         }
 
-        /* Cute Pill Buttons */
+        /* Buttons Fixes */
         .btn {
             width: 100%;
             padding: 1rem;
@@ -212,7 +246,7 @@
             color: white;
             box-shadow: 0 6px 0px #e63956;
             flex: 1.2;
-            height: 50px; /* Match the height */
+            height: 50px; 
         }
 
         #yes-btn:active {
@@ -220,19 +254,15 @@
             box-shadow: 0 3px 0px #e63956;
         }
 
-        /* THE NEW ULTRA-CUTE NO BUTTON */
+        /* LOCKED FIXED SIZES ON NO BUTTON */
         #no-btn {
             background-color: #f1eef5;
             color: #8e7f93;
             border: 3px dashed #d2c9d6;
             border-radius: 50px;
-            
-            /* FIX: Force a strict size so it doesn't expand when moving */
             width: 140px;
             height: 50px;
-            flex: none; /* Keeps it from stretching inside the container initially */
-            
-            /* Ultra smooth bouncy slide */
+            flex: none;
             transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -244,6 +274,15 @@
             font-size: 3.5rem;
             margin-bottom: 0.5rem;
             animation: float 3s ease-in-out infinite;
+        }
+
+        /* Metadata Deployment Label Style */
+        .deployment-meta {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #c9afb3;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
         @keyframes float {
@@ -272,28 +311,32 @@
 
         <div class="form-group">
             <label>Date Ideas (Pick Multiple) 🍕</label>
-            <div class="ideas-grid" id="ideas-wrapper">
-                </div>
+            <div class="ideas-grid" id="ideas-wrapper"></div>
         </div>
 
         <div class="form-group">
-            <label>Propose a Date & Time ⏰</label>
-            <input type="datetime-local" id="date-option-1">
+            <label>Propose Date & Time Options ⏰</label>
+            <div class="slots-container" id="slots-wrapper">
+                <input type="datetime-local" class="date-slot-input">
+            </div>
+            <button class="add-slot-btn" id="add-slot-trigger">+ Add Another Date Slot</button>
         </div>
 
         <button class="btn btn-primary" id="generate-btn">Generate Demo ➔</button>
+        
+        <div class="deployment-meta">Live Build: June 3, 2026 • 20:00 PHT</div>
     </div>
 
     <div class="card hidden" id="recipient-card">
         <div class="header-illustration" id="recipient-emoji">✨</div>
         <h2 id="recipient-title">Hey! 💕</h2>
-        <p id="recipient-subtitle">Pick your absolute favorite option:</p>
+        <p id="recipient-subtitle">Pick your preferences:</p>
 
-        <div class="form-group">
-            <label>Select Itinerary Option</label>
-            <div class="selection-list" id="options-selector-container">
-                </div>
-        </div>
+        <div class="selection-section-title">1. Pick the Vibe</div>
+        <div class="selection-list" id="ideas-selector-container"></div>
+
+        <div class="selection-section-title">2. Pick the Time</div>
+        <div class="selection-list" id="slots-selector-container"></div>
 
         <div class="form-group hidden" id="other-input-container">
             <label>What do you prefer instead? ✨</label>
@@ -304,6 +347,8 @@
             <button class="btn" id="yes-btn">Accept! ✨💖</button>
             <button class="btn" id="no-btn">Decline 🥺</button>
         </div>
+        
+        <div class="deployment-meta">Live Build: June 3, 2026 • 20:00 PHT</div>
     </div>
 
     <script>
@@ -322,6 +367,7 @@
         const selectedIdeas = new Set();
         const wrapper = document.getElementById('ideas-wrapper');
 
+        // Setup Idea Selector Grid
         dateCatalog.forEach(item => {
             const el = document.createElement('div');
             el.className = 'idea-card';
@@ -338,57 +384,88 @@
             wrapper.appendChild(el);
         });
 
+        // Add Multi-Slot Input fields dynamically
+        const addSlotTrigger = document.getElementById('add-slot-trigger');
+        const slotsWrapper = document.getElementById('slots-wrapper');
+        
+        addSlotTrigger.addEventListener('click', () => {
+            const newInput = document.createElement('input');
+            newInput.type = 'datetime-local';
+            newInput.className = 'date-slot-input';
+            slotsWrapper.appendChild(newInput);
+        });
+
+        // Phase Transition Trigger
         const generateBtn = document.getElementById('generate-btn');
         generateBtn.addEventListener('click', () => {
             const asker = document.getElementById('asker-name').value || "Alex";
             const recipient = document.getElementById('recipient-name').value || "Taylor";
-            const rawDate = document.getElementById('date-option-1').value;
+            
+            // Collect all non-empty date slots
+            const rawInputs = document.querySelectorAll('.date-slot-input');
+            const processedSlots = [];
+            
+            rawInputs.forEach(input => {
+                if(input.value) {
+                    const d = new Date(input.value);
+                    const formatted = d.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' @ ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    processedSlots.push(formatted);
+                }
+            });
+            if(processedSlots.length === 0) processedSlots.push("Sometime soon!");
 
-            let dateString = "Sometime soon";
-            if(rawDate) {
-                const d = new Date(rawDate);
-                dateString = d.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' at ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            }
-
+            // Setup Recipient Cards
             document.getElementById('recipient-title').innerText = `Hey ${recipient}! 💕`;
-            document.getElementById('recipient-subtitle').innerText = `${asker} wants to take you out! Pick your vibe:`;
+            document.getElementById('recipient-subtitle').innerText = `${asker} wants to take you out! Customize the itinerary:`;
 
-            const optionsContainer = document.getElementById('options-selector-container');
-            optionsContainer.innerHTML = ''; 
-
+            // Inject Custom Vibe checkboxes
+            const ideasContainer = document.getElementById('ideas-selector-container');
+            ideasContainer.innerHTML = '';
             if(selectedIdeas.size === 0) selectedIdeas.add('any');
-
+            
             selectedIdeas.forEach(id => {
                 const match = dateCatalog.find(x => x.id === id);
-                createRadioButton(optionsContainer, `${match.label} (${dateString})`, id);
+                createSelectionItem(ideasContainer, match.label, id, 'vibe-checkbox', 'checkbox');
             });
+            createSelectionItem(ideasContainer, "Something else... 🤔", 'other', 'vibe-checkbox', 'checkbox');
 
-            createRadioButton(optionsContainer, "Something else... 🤔", "other");
+            // Inject Custom Time radio dials
+            const slotsContainer = document.getElementById('slots-selector-container');
+            slotsContainer.innerHTML = '';
+            processedSlots.forEach((slotText, index) => {
+                createSelectionItem(slotsContainer, slotText, `time-${index}`, 'time-radio', 'radio');
+            });
 
             document.getElementById('asker-card').classList.add('hidden');
             document.getElementById('recipient-card').classList.remove('hidden');
         });
 
-        function createRadioButton(parent, text, value) {
+        function createSelectionItem(parent, text, value, groupName, type) {
             const labelEl = document.createElement('label');
             labelEl.className = 'select-item';
-            labelEl.innerHTML = `<input type="radio" name="itinerary" value="${value}"> <span>${text}</span>`;
+            labelEl.innerHTML = `<input type="${type}" name="${groupName}" value="${value}"> <span>${text}</span>`;
             
-            labelEl.addEventListener('click', () => {
-                document.querySelectorAll('.select-item').forEach(x => x.classList.remove('selected'));
-                labelEl.classList.add('selected');
-                
-                const otherInput = document.getElementById('other-input-container');
-                if(value === 'other') {
-                    otherInput.classList.remove('hidden');
+            labelEl.querySelector('input').addEventListener('change', (e) => {
+                if(type === 'radio') {
+                    parent.querySelectorAll('.select-item').forEach(x => x.classList.remove('selected'));
+                }
+                if(e.target.checked) {
+                    labelEl.classList.add('selected');
                 } else {
-                    otherInput.classList.add('hidden');
+                    labelEl.classList.remove('selected');
+                }
+                
+                // Track if "Other" custom option box was triggered
+                if(value === 'other') {
+                    const otherInput = document.getElementById('other-input-container');
+                    if(e.target.checked) otherInput.classList.remove('hidden');
+                    else otherInput.classList.add('hidden');
                 }
             });
             parent.appendChild(labelEl);
         }
 
-        // SMOOTH BOUNCY EVASION
+        // NO-BUTTON BALANCED FLIGHT LOGIC
         const noBtn = document.getElementById('no-btn');
         function dodge() {
             const padding = 40;
@@ -406,23 +483,30 @@
         noBtn.addEventListener('mouseover', dodge);
         noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); dodge(); });
 
-        // Win State
+        // Accept Event Click Handler
         document.getElementById('yes-btn').addEventListener('click', () => {
-            const checkedOpt = document.querySelector('input[name="itinerary"]:checked');
-            let finalSelection = "a surprise date";
-            
-            if(checkedOpt) {
-                if(checkedOpt.value === 'other') {
-                    finalSelection = document.getElementById('other-freeform').value || "something custom and fun";
+            // Read chosen items
+            const selectedVibeElements = document.querySelectorAll('input[name="vibe-checkbox"]:checked');
+            let vibes = [];
+            selectedVibeElements.forEach(el => {
+                if(el.value === 'other') {
+                    const altVal = document.getElementById('other-freeform').value;
+                    vibes.push(altVal ? `Custom Idea (${altVal})` : 'Alternative Plan');
                 } else {
-                    finalSelection = dateCatalog.find(x => x.id === checkedOpt.value).label;
+                    vibes.push(dateCatalog.find(x => x.id === el.value).label);
                 }
-            }
+            });
+            
+            const selectedTimeEl = document.querySelector('input[name="time-radio"]:checked');
+            const finalTime = selectedTimeEl ? selectedTimeEl.parentElement.querySelector('span').innerText : "a perfect time";
 
             document.getElementById('recipient-emoji').innerText = '🎉✨';
-            document.getElementById('recipient-title').innerText = "Yay! It's a date!!";
-            document.getElementById('recipient-subtitle').innerHTML = `Locked in for <strong>${finalSelection}</strong>. Can't wait! 🍰🌸`;
-            document.getElementById('options-selector-container').classList.add('hidden');
+            document.getElementById('recipient-title').innerText = "It's fully locked in!";
+            document.getElementById('recipient-subtitle').innerHTML = `Going for: <strong>${vibes.join(' & ') || 'Surprise Vibe'}</strong><br>Scheduled for: <strong>${finalTime}</strong>.<br><br>Can't wait! 🍰🌸`;
+            
+            document.querySelectorAll('.selection-section-title').forEach(el => el.classList.add('hidden'));
+            document.getElementById('ideas-selector-container').classList.add('hidden');
+            document.getElementById('slots-selector-container').classList.add('hidden');
             document.getElementById('other-input-container').classList.add('hidden');
             document.getElementById('action-wrapper').classList.add('hidden');
         });
