@@ -286,7 +286,7 @@
 
         .proposal-actions {
             display: flex;
-            gap: 16px; /* Perfect, visible initial spacing between options */
+            gap: 16px; 
             justify-content: center;
             align-items: center;
             margin-top: 2rem;
@@ -298,7 +298,7 @@
             background-color: var(--primary);
             color: white;
             box-shadow: 0 6px 0px #e63956;
-            width: 160px; /* Locked standard width */
+            width: 160px; 
             height: 50px; 
             transition: transform 0.2s ease;
         }
@@ -310,9 +310,9 @@
             color: #927e83;
             border: 3px solid #e1d3d6;
             border-radius: 50px;
-            width: 140px; /* Explicit size lock */
+            width: 140px; 
             height: 50px;
-            /* Transition property manages left/top positioning with zero initial blinking */
+            flex: none;
             transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -341,6 +341,7 @@
 </head>
 <body>
 
+    <!-- PHASE 1: ASKER CREATOR APP -->
     <div class="card" id="asker-card">
         <div class="header-illustration">💌</div>
         <h2>Create Invite ✨</h2>
@@ -369,9 +370,10 @@
 
         <button class="btn btn-primary" id="generate-btn">Generate Demo ➔</button>
         
-        <div class="deployment-meta">Live Build: June 3, 2026 • 20:25 PHT</div>
+        <div class="deployment-meta">Live Build: June 4, 2026 • 16:45 PHT</div>
     </div>
 
+    <!-- PHASE 2: RECIPIENT INTERACTIVE APP -->
     <div class="card hidden" id="recipient-card">
         <div class="header-illustration" id="recipient-emoji">✨</div>
         <h2 id="recipient-title">Hey! 💕</h2>
@@ -393,20 +395,21 @@
             <button class="btn" id="no-btn">Decline</button>
         </div>
         
-        <div class="deployment-meta">Live Build: June 3, 2026 • 20:25 PHT</div>
+        <div class="deployment-meta">Live Build: June 4, 2026 • 16:45 PHT</div>
     </div>
 
     <script>
+        // FIXED THE MATCHER LINK GRAPHICS TO CORRESPOND ACCURATELY WITH THE USER REQUEST
         const dateCatalog = [
             { id: 'pizza', label: 'Pizza', img: 'https://cdn-icons-png.flaticon.com/128/3595/3595455.png' },
-            { id: 'ramen', label: 'Ramen', img: 'https://cdn-icons-png.flaticon.com/128/1041/1041349.png' },
+            { id: 'ramen', label: 'Ramen', img: 'https://cdn-icons-png.flaticon.com/128/1041/1041312.png' }, // Actual Ramen Bowl illustration
             { id: 'coffee', label: 'Coffee', img: 'https://cdn-icons-png.flaticon.com/128/924/924514.png' },
-            { id: 'drinks', label: 'Drinks', img: 'https://cdn-icons-png.flaticon.com/128/924/924525.png' },
-            { id: 'steak', label: 'Steak', img: 'https://cdn-icons-png.flaticon.com/128/3082/3082031.png' },
+            { id: 'drinks', label: 'Drinks', img: 'https://cdn-icons-png.flaticon.com/128/2441/2441118.png' }, // Interactive Cocktail Glasses
+            { id: 'steak', label: 'Steak', img: 'https://cdn-icons-png.flaticon.com/128/2921/2921948.png' },  // Raw Marbled Wagyu Cut
             { id: 'gym', label: 'Gym', img: 'https://cdn-icons-png.flaticon.com/128/2964/2964514.png' },
             { id: 'walk', label: 'Walk', img: 'https://cdn-icons-png.flaticon.com/128/4383/4383626.png' },
             { id: 'run', label: 'Run', img: 'https://cdn-icons-png.flaticon.com/128/5147/5147006.png' },
-            { id: 'any', label: 'Surprise Me!', img: 'https://cdn-icons-png.flaticon.com/128/2331/2331327.png' }
+            { id: 'any', label: 'Surprise Me!', img: 'https://cdn-icons-png.flaticon.com/128/6165/6165577.png' } // Mystery Box Asset
         ];
 
         const selectedIdeas = new Set();
@@ -565,11 +568,9 @@
             window.scrollTo(0, 0);
         });
 
-        // SMOOTH EVASION TRANSITION WITHOUT VOID POPPING GLITCHES
         const noBtn = document.getElementById('no-btn');
         
         function dodge() {
-            // Read coordinates on the very first frame it is targeted
             if(noBtn.style.position !== 'fixed') {
                 const initialRect = noBtn.getBoundingClientRect();
                 noBtn.style.left = initialRect.left + 'px';
@@ -584,7 +585,6 @@
             const randomX = Math.floor(Math.random() * (maxX - padding) + padding);
             const randomY = Math.floor(Math.random() * (maxY - padding) + padding);
 
-            // Set new positions seamlessly
             noBtn.style.left = randomX + 'px';
             noBtn.style.top = randomY + 'px';
         }
