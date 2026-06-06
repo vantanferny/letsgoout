@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Let's Go Out! ✨</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
             --bg-main: #fff0f3;
@@ -384,6 +385,11 @@
             <input type="text" id="asker-name" placeholder="Alex">
         </div>
 
+        <div class="form-group">
+            <label>Your Email (we'll notify you of their answer)</label>
+            <input type="text" id="asker-email" placeholder="you@email.com">
+        </div>
+
         <div class="slot-selectors">
             <div class="form-group" style="width: 50%;">
                 <label>Their Name</label>
@@ -453,6 +459,18 @@
     </div>
 
     <script>
+        // ⚙️ EMAILJS CONFIG — paste your 3 values from emailjs.com here (see setup notes).
+        const EMAILJS_CONFIG = {
+            PUBLIC_KEY:  'KYL3gbNshdPYw9I0G',
+            SERVICE_ID:  'service_e3e63jl',
+            TEMPLATE_ID: 'template_7kojz6j'
+        };
+
+        // Initialize EmailJS (safe to call even before keys are filled in).
+        if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+            emailjs.init({ publicKey: EMAILJS_CONFIG.PUBLIC_KEY });
+        }
+
         const dateCatalog = [
             { id: 'pizza', label: 'Pizza', emoji: '🍕' },
             { id: 'ramen', label: 'Ramen', emoji: '🍜' }, 
@@ -603,6 +621,7 @@
 
         document.getElementById('generate-btn').addEventListener('click', () => {
             const asker = document.getElementById('asker-name').value || "Alex";
+            const askerEmail = document.getElementById('asker-email').value || "";
             const recipient = document.getElementById('recipient-name').value || "Taylor";
             const pronoun = document.getElementById('recipient-pronoun').value;
             
@@ -620,6 +639,7 @@
 
             activeInviteData = {
                 a: asker,
+                e: askerEmail,
                 r: recipient,
                 p: pronoun,
                 i: Array.from(selectedIdeas),
@@ -655,8 +675,10 @@
         });
 
         const recipientSelectedIdeas = new Set();
+        let currentInvite = null;
 
         function renderRecipientView(data) {
+            currentInvite = data;
             document.getElementById('landing-page').classList.add('hidden');
             document.getElementById('asker-card').classList.add('hidden');
             document.getElementById('share-card').classList.add('hidden');
@@ -772,6 +794,18 @@
             
             const selectedTimeEl = document.querySelector('input[name="time-radio"]:checked');
             const finalTime = selectedTimeEl ? selectedTimeEl.parentElement.querySelector('span').innerText : "a perfect time";
+
+            // 📧 Notify the asker by email with the recipient's picks.
+            const chosenVibes = vibes.join(' & ') || 'Surprise Vibe';
+            if (currentInvite && currentInvite.e && EMAILJS_CONFIG.PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+                emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, {
+                    to_email: currentInvite.e,
+                    asker_name: currentInvite.a,
+                    recipient_name: currentInvite.r,
+                    vibes: chosenVibes,
+                    date_time: finalTime
+                }).catch(err => console.error('Notification email failed:', err));
+            }
 
             document.getElementById('recipient-emoji').innerText = '🎉✨';
             document.getElementById('recipient-title').innerText = "It's a date!!";
