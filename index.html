@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Let's Go Out! ✨</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- PWA -->
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="theme-color" content="#ff758f">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Let's Go Out">
+
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
@@ -485,6 +495,14 @@
 
         // Last deployment time — from the Last-Modified header GitHub Pages serves for index.html.
         console.log('🚀 Last deployed:', document.lastModified);
+
+        // Register the service worker (enables install + offline shell).
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .catch((err) => console.error('Service worker registration failed:', err));
+            });
+        }
 
         const dateCatalog = [
             { id: 'pizza', label: 'Pizza', emoji: '🍕' },
