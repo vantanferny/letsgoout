@@ -370,6 +370,14 @@
             z-index: 200;
         }
         .install-modal { max-width: 360px; }
+        .install-app-icon {
+            width: 76px;
+            height: 76px;
+            border-radius: 18px;
+            margin: 0 auto 0.7rem;
+            box-shadow: 0 8px 18px rgba(255, 77, 109, 0.35);
+        }
+        #install-modal-text { font-size: 0.95rem; line-height: 1.5; }
         
         .header-illustration {
             font-size: 3rem;
@@ -405,8 +413,8 @@
     <!-- PWA INSTALL PROMPT (landing only, one-time, dismissible) -->
     <div class="modal-overlay hidden" id="install-modal-overlay">
         <div class="card install-modal">
-            <div class="header-illustration">📲</div>
-            <h2>Add to Home Screen</h2>
+            <img src="./icon-192.png" alt="Let's Go Out app icon" class="install-app-icon">
+            <h2 id="install-modal-title">Add to Home Screen</h2>
             <p id="install-modal-text">Install Let's Go Out for one-tap access — it opens fullscreen, just like a real app! ✨</p>
             <button class="btn btn-primary" id="install-accept-btn">Install ✨</button>
             <button class="btn btn-secondary" id="install-dismiss-btn">Maybe later</button>
@@ -532,12 +540,19 @@
             const overlay = document.getElementById('install-modal-overlay');
             const acceptBtn = document.getElementById('install-accept-btn');
             const dismissBtn = document.getElementById('install-dismiss-btn');
+            const modalTitle = document.getElementById('install-modal-title');
             const modalText = document.getElementById('install-modal-text');
             let deferredPrompt = null;
 
+            // The real iOS "Share" glyph, inline so the instructions are unmistakable.
+            const SHARE_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin:0 2px;"><path d="M12 4v11"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M9 10H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg>';
+
+            const ua = navigator.userAgent || '';
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-            const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+            const isIOS = /iphone|ipad|ipod/i.test(ua) ||
                           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            // In-app browsers (Instagram, Messenger, FB, etc.) can't Add to Home Screen.
+            const isInApp = /Instagram|FBAN|FBAV|FB_IAB|Messenger|Line\/|Twitter|TikTok|Snapchat|WhatsApp/i.test(ua);
             const onInvitePage = new URLSearchParams(window.location.search).has('id');
             const dismissed = localStorage.getItem('installPromptDismissed') === '1';
 
@@ -547,9 +562,21 @@
             function showModal() { if (eligible) overlay.classList.remove('hidden'); }
 
             if (eligible) {
-                if (isIOS) {
-                    // iOS can't trigger install programmatically — show the manual steps.
-                    modalText.innerHTML = 'Tap the <strong>Share</strong> icon, then choose <strong>“Add to Home Screen”</strong> 💕';
+                if (isInApp) {
+                    // Can't install inside an in-app browser — guide them to open in the real browser first.
+                    modalTitle.innerText = 'Open in your browser';
+                    modalText.innerHTML = 'To save this app, tap the <strong>•••</strong> menu and choose <strong>“Open in Browser”</strong> first 💕';
+                    acceptBtn.classList.add('hidden');
+                    setTimeout(showModal, 1800);
+                } else if (isIOS) {
+                    // iOS can't trigger install programmatically — and only Safari can Add to Home Screen.
+                    const isIOSSafari = !/CriOS|FxiOS|EdgiOS/i.test(ua);
+                    if (isIOSSafari) {
+                        modalText.innerHTML = 'Tap ' + SHARE_ICON + ' below, then choose <strong>“Add to Home Screen”</strong> 💕';
+                    } else {
+                        modalTitle.innerText = 'Open in Safari';
+                        modalText.innerHTML = 'On iPhone, apps can only be saved from <strong>Safari</strong>. Open this page there, then tap ' + SHARE_ICON + ' → <strong>“Add to Home Screen”</strong> 💕';
+                    }
                     acceptBtn.classList.add('hidden');
                     setTimeout(showModal, 1500);
                 } else {
