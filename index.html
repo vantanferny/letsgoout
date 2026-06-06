@@ -266,8 +266,13 @@
         }
         .select-item input[type="radio"] { transform: scale(1.2); }
 
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .btn {
-            padding: 0.85rem; 
+            padding: 0.85rem;
             font-size: 1.05rem;
             font-weight: 600;
             border: none;
@@ -431,10 +436,12 @@
         
         <button class="btn btn-primary" id="copy-btn">Copy Link 📋</button>
         <button class="btn btn-secondary" id="preview-btn">Preview Invite 👀</button>
+        <button class="btn btn-secondary" id="share-back-btn">← Back to Create Invite</button>
     </div>
 
     <!-- PHASE 2: RECIPIENT INTERACTIVE APP -->
     <div class="card hidden" id="recipient-card">
+        <button class="btn btn-secondary hidden" id="preview-back-btn" style="margin-top:0; margin-bottom:1rem;">← Back to Link</button>
         <div class="header-illustration" id="recipient-emoji">✨</div>
         <h2 id="recipient-title">Hey! 💕</h2>
         <p id="recipient-subtitle">Pick your preferences:</p>
@@ -466,10 +473,18 @@
             TEMPLATE_ID: 'template_7kojz6j'
         };
 
+        // ⚙️ JSONBIN CONFIG — paste an Access Key (scoped to Bin Create + Read) from jsonbin.io.
+        const JSONBIN_CONFIG = {
+            ACCESS_KEY: '$2a$10$OpvgE001Z.7YoIR1QxAiquWQJnncryFeN9U3nsNyu4IRFawJmPVH.'
+        };
+
         // Initialize EmailJS (safe to call even before keys are filled in).
         if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
             emailjs.init({ publicKey: EMAILJS_CONFIG.PUBLIC_KEY });
         }
+
+        // Last deployment time — from the Last-Modified header GitHub Pages serves for index.html.
+        console.log('🚀 Last deployed:', document.lastModified);
 
         const dateCatalog = [
             { id: 'pizza', label: 'Pizza', emoji: '🍕' },
@@ -483,15 +498,18 @@
             { id: 'any', label: 'Surprise Me!', emoji: '🎁' } 
         ];
 
-        window.onload = () => {
+        window.onload = async () => {
             const params = new URLSearchParams(window.location.search);
-            if (params.has('invite')) {
+            if (params.has('id')) {
+                // Short link: fetch the invite from jsonbin by its bin ID.
                 try {
-                    const encodedData = params.get('invite');
-                    const decodedData = JSON.parse(decodeURIComponent(atob(encodedData)));
-                    renderRecipientView(decodedData);
+                    const binId = params.get('id');
+                    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`);
+                    const json = await res.json();
+                    if (!res.ok || !json.record) throw new Error('Bin not found');
+                    renderRecipientView(json.record);
                 } catch (e) {
-                    console.error("Invalid invite link.");
+                    console.error("Couldn't load invite:", e);
                     document.getElementById('landing-page').classList.remove('hidden');
                 }
             } else {
@@ -619,7 +637,7 @@
 
         let activeInviteData = null;
 
-        document.getElementById('generate-btn').addEventListener('click', () => {
+        document.getElementById('generate-btn').addEventListener('click', async () => {
             const asker = document.getElementById('asker-name').value || "Alex";
             const askerEmail = document.getElementById('asker-email').value || "";
             const recipient = document.getElementById('recipient-name').value || "Taylor";
@@ -646,14 +664,51 @@
                 s: processedSlots
             };
 
-            const base64Data = btoa(encodeURIComponent(JSON.stringify(activeInviteData)));
             const baseURL = window.location.href.split('?')[0];
-            const finalLink = `${baseURL}?invite=${base64Data}`;
 
-            document.getElementById('generated-url').innerText = finalLink;
-
+            // Show the share card immediately with a loading state.
+            const urlBox = document.getElementById('generated-url');
+            const genBtn = document.getElementById('generate-btn');
+            const copyBtn = document.getElementById('copy-btn');
+            genBtn.disabled = true;
+            copyBtn.disabled = true;
+            urlBox.innerText = "Generating link… ⏳";
             document.getElementById('asker-card').classList.add('hidden');
             document.getElementById('share-card').classList.remove('hidden');
+
+            // Save the invite to jsonbin and share a short ?id= link.
+            let shareLink = null;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const res = await fetch('https://api.jsonbin.io/v3/b', {
+                    method: 'POST',
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Access-Key': JSONBIN_CONFIG.ACCESS_KEY,
+                        'X-Bin-Private': 'false'
+                    },
+                    body: JSON.stringify(activeInviteData)
+                });
+                clearTimeout(timeoutId);
+                const json = await res.json();
+                if (res.ok && json.metadata && json.metadata.id) {
+                    shareLink = `${baseURL}?id=${json.metadata.id}`;
+                } else {
+                    console.error('jsonbin create failed:', json);
+                }
+            } catch (err) {
+                console.error('jsonbin create failed/timed out:', err);
+            }
+
+            if (shareLink) {
+                urlBox.innerText = shareLink;
+                copyBtn.disabled = false;
+            } else {
+                urlBox.innerText = "⚠️ Couldn't generate link — please try again.";
+            }
+            genBtn.disabled = false;
         });
 
         document.getElementById('copy-btn').addEventListener('click', () => {
@@ -672,6 +727,21 @@
         document.getElementById('preview-btn').addEventListener('click', () => {
             renderRecipientView(activeInviteData);
             document.getElementById('share-card').classList.add('hidden');
+            // Only shown in preview mode — real recipients never see this.
+            document.getElementById('preview-back-btn').classList.remove('hidden');
+        });
+
+        // Back: share-link page → asker form
+        document.getElementById('share-back-btn').addEventListener('click', () => {
+            document.getElementById('share-card').classList.add('hidden');
+            document.getElementById('asker-card').classList.remove('hidden');
+        });
+
+        // Back: preview → share-link page
+        document.getElementById('preview-back-btn').addEventListener('click', () => {
+            document.getElementById('recipient-card').classList.add('hidden');
+            document.getElementById('preview-back-btn').classList.add('hidden');
+            document.getElementById('share-card').classList.remove('hidden');
         });
 
         const recipientSelectedIdeas = new Set();
@@ -682,6 +752,16 @@
             document.getElementById('landing-page').classList.add('hidden');
             document.getElementById('asker-card').classList.add('hidden');
             document.getElementById('share-card').classList.add('hidden');
+
+            // Reset any leftover state from a previous preview / "Yes" answer.
+            recipientSelectedIdeas.clear();
+            document.getElementById('recipient-emoji').innerText = '✨';
+            document.querySelectorAll('.selection-section-title').forEach(el => el.classList.remove('hidden'));
+            document.getElementById('recipient-ideas-grid').classList.remove('hidden');
+            document.getElementById('slots-selector-container').classList.remove('hidden');
+            document.getElementById('action-wrapper').classList.remove('hidden');
+            document.getElementById('other-input-container').classList.add('hidden');
+            document.getElementById('other-freeform').value = '';
 
             document.getElementById('recipient-title').innerText = `Hey ${data.r}! 💕`;
             
