@@ -358,6 +358,18 @@
         }
 
         .hidden { display: none !important; }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(92, 67, 71, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 200;
+        }
+        .install-modal { max-width: 360px; }
         
         .header-illustration {
             font-size: 3rem;
@@ -388,6 +400,17 @@
         <h1>Let's go out!</h1>
         <p>The perfect way to ask them out. <br>Design a personalized date invite in seconds.</p>
         <button class="btn btn-primary" id="start-btn" style="max-width: 260px;">Ask Someone Out ✨</button>
+    </div>
+
+    <!-- PWA INSTALL PROMPT (landing only, one-time, dismissible) -->
+    <div class="modal-overlay hidden" id="install-modal-overlay">
+        <div class="card install-modal">
+            <div class="header-illustration">📲</div>
+            <h2>Add to Home Screen</h2>
+            <p id="install-modal-text">Install Let's Go Out for one-tap access — it opens fullscreen, just like a real app! ✨</p>
+            <button class="btn btn-primary" id="install-accept-btn">Install ✨</button>
+            <button class="btn btn-secondary" id="install-dismiss-btn">Maybe later</button>
+        </div>
     </div>
 
     <!-- PHASE 1: ASKER CREATOR APP -->
@@ -503,6 +526,58 @@
                     .catch((err) => console.error('Service worker registration failed:', err));
             });
         }
+
+        // ---- PWA install prompt (landing only, one-time, dismissible) ----
+        (function setupInstallPrompt() {
+            const overlay = document.getElementById('install-modal-overlay');
+            const acceptBtn = document.getElementById('install-accept-btn');
+            const dismissBtn = document.getElementById('install-dismiss-btn');
+            const modalText = document.getElementById('install-modal-text');
+            let deferredPrompt = null;
+
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const onInvitePage = new URLSearchParams(window.location.search).has('id');
+            const dismissed = localStorage.getItem('installPromptDismissed') === '1';
+
+            // Never interrupt a recipient, an installed user, or someone who said "maybe later".
+            const eligible = !isStandalone && !onInvitePage && !dismissed;
+
+            function showModal() { if (eligible) overlay.classList.remove('hidden'); }
+
+            if (eligible) {
+                if (isIOS) {
+                    // iOS can't trigger install programmatically — show the manual steps.
+                    modalText.innerHTML = 'Tap the <strong>Share</strong> icon, then choose <strong>“Add to Home Screen”</strong> 💕';
+                    acceptBtn.classList.add('hidden');
+                    setTimeout(showModal, 1500);
+                } else {
+                    // Chrome/Edge/Android: capture the native prompt, then offer it via our button.
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        deferredPrompt = e;
+                        showModal();
+                    });
+                }
+            }
+
+            acceptBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                }
+                overlay.classList.add('hidden');
+            });
+
+            dismissBtn.addEventListener('click', () => {
+                localStorage.setItem('installPromptDismissed', '1');
+                overlay.classList.add('hidden');
+            });
+
+            window.addEventListener('appinstalled', () => overlay.classList.add('hidden'));
+        })();
 
         const dateCatalog = [
             { id: 'pizza', label: 'Pizza', emoji: '🍕' },
